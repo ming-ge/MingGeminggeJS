@@ -1,11 +1,11 @@
-/*  MingGeminggeJS类库1.8.1
+/*  MingGeminggeJS类库1.8.2
  *  
  *  你会用MingGeJS，那你也会用这个类库，因为语法都是一样的,那有开发文档吗？和MingGeJS一样，要开发文档干嘛？
  *
  *  MingGeminggeJS的运行绝对比MingGeJS快，因为够精简，MingGeminggeJS是你的最佳选择，请多多支持，
  */
 (function(window, varName, undefined) {
-    var MingGEjs = "1.8.1",
+    var MingGeJs = "1.8.2",
     DOC = document,
     addEvent, delEvent, DOCSCROLL_LT, saveGetMobile, ENCODE = encodeURIComponent,
     isGetClassName = !!DOC.getElementsByClassName,
@@ -27,6 +27,25 @@
             browser: match[1] || "",
             version: match[2] || "0"
         };
+    },
+    bubbling = function(eveName) {
+        D.each.call(this.nodeList,
+        function() {
+            if (this[eveName]) {
+                this[eveName]();
+            } else {
+                var MingGeBind = this.MingGeBind,
+                this_ = this;
+                MingGeBind && MingGeBind[eveName] && D.each(MingGeBind[eveName].concat(),
+                function(key, val) {
+                    var callback = val.callback;
+                    try {
+                        callback.isOne && protected.DelElemEve(this_, eveName, callback);
+                        callback.call(this_);
+                    } catch(e) {}
+                });
+            }
+        });
     },
     analyse = function(string) {
         var match = rquickExpr.exec(string),
@@ -73,7 +92,7 @@
             return "\\" + str;
         });
     },
-    system = {
+    protected = {
         forEve: function(elem, eveName, callback, isOne, isMouse) {
             var myCallback, myEveName;
             if (isMouse) {
@@ -86,15 +105,17 @@
             var bck = this.bindCallback.call(elem, myCallback, myEveName, isOne, isMouse);
             bck.callback = callback;
             isOne && (bck.callback.isOne = 1);
-            this.addElemEve(elem, eveName, bck);
-            addEvent(elem, myEveName, bck);
+            try {
+                addEvent(elem, myEveName, bck);
+                this.addElemEve(elem, eveName, bck);
+            } catch(e) {}
         },
         transform: false,
         bindCallback: function(callback, eveName, isOne, isMouse) {
             var this_ = this;
             return function(eve) {
                 if (isOne === true && !isMouse) {
-                    system.DelElemEve(this_, eveName, callback);
+                    protected.DelElemEve(this_, eveName, callback);
                 }
                 callback.call(this_, eve || window.event);
             };
@@ -113,7 +134,7 @@
                 var parent = event.relatedTarget,
                 Target = parent;
                 if (parent == null || arrTwo.indexOf(parent) > -1) {
-                    isOne && system.DelElemEve(this, eveName, callback);
+                    isOne && protected.DelElemEve(this, eveName, callback);
                     callback.call(this, event);
                     return;
                 }
@@ -132,7 +153,7 @@
                     return false;
                 }
                 arrTwo.push(Target);
-                isOne && system.DelElemEve(this, eveName, callback);
+                isOne && protected.DelElemEve(this, eveName, callback);
                 callback.call(this, event);
             };
         },
@@ -182,7 +203,7 @@
         },
         setS: function(name, num) {
             if (D.isUndefined(num)) {
-                return system.getCS.call(this, name, true);
+                return protected.getCS.call(this, name, true);
             }
             num = parseFloat(num);
             if (D.isNumber(num)) {
@@ -190,7 +211,7 @@
                 function() {
                     try {
                         if (this == window || this == DOC) {
-                            system.setScroll_LT(name, num);
+                            protected.setScroll_LT(name, num);
                         } else {
                             this[name] = num;
                         }
@@ -208,7 +229,7 @@
         getCS: function(name, is) {
             var node = this.nodeList[0];
             if (node && (node == window || node == DOC)) {
-                return is ? system.getScroll_LT(name) : (DOC.documentElement || DOC.body)[name];
+                return is ? protected.getScroll_LT(name) : (DOC.documentElement || DOC.body)[name];
             }
             try {
                 return node[name];
@@ -218,7 +239,7 @@
         },
         getFilter: function(elem) {
             var ori;
-            if (ori = system.original("filter", system.oStyleValue(elem))) {
+            if (ori = protected.original("filter", protected.oStyleValue(elem))) {
                 ori = /opacity\s*=\s*([0-9]+)/.exec(ori);
                 ori = ori ? parseInt(ori[1]) * .01 : 1;
             } else ori = 1;
@@ -248,7 +269,7 @@
             returns;
             create.style.visibility = "hidden";
             bodys.appendChild(create);
-            returns = system.original("display", system.oStyleValue(create));
+            returns = protected.original("display", protected.oStyleValue(create));
             bodys.removeChild(create);
             return returns;
         },
@@ -289,12 +310,12 @@
                         try {
                             delete window[funName];
                         } catch(e) {
-                            window[funName] = null;
+                            window[funName] = undefined;
                         }
                     };
                     window[funName] = function(data) {
                         timer && (clearTimeout(timer), timer = null);
-                        D.isFunction(success) && success(system.JsonString.StringToJson(data) || data, "success");
+                        D.isFunction(success) && success(protected.JsonString.StringToJson(data) || data, "success");
                         out();
                     };
                     var script = D.createScript(url);
@@ -344,12 +365,18 @@
                 } else {
                     D.each(MingGeBind,
                     function(key, val) {
-                        isMouse = system.isMouse(key) || key;
-                        MingGeBind[key] = system.eachDel(val, elem, callback, isMouse);
+                        isMouse = protected.isMouse(key) || key;
+                        MingGeBind[key] = protected.eachDel(val, elem, callback, isMouse);
                         D.isEmptyObject(MingGeBind[key]) && delete MingGeBind[key];
                     });
                 }
-                D.isEmptyObject(MingGeBind) && delete E.MingGeBind;
+                if (D.isEmptyObject(MingGeBind)) {
+                    try {
+                        delete E.MingGeBind;
+                    } catch(e) {
+                        E.MingGeBind = undefined;
+                    }
+                }
             }
         },
         htmlVal: function(hv, str) {
@@ -358,7 +385,7 @@
                 if (D.isTxt(str)) {
                     D.each.call(this.nodeList,
                     function() {
-                        system.isIndex(hv, this) && (this[hv] = str);
+                        protected.isIndex(hv, this) && (this[hv] = str);
                     });
                     return this;
                 }
@@ -409,7 +436,7 @@
         animate: function(params, speed, callback, model) {
             model = trim(model);
             model = D.isString(model) && /^(linear|ease|ease-in|ease-out|ease-in-out|cubic-bezier\s*\(.+\))$/.test(model) ? model: "ease-out";
-            var timingFunction = system.transition + "TimingFunction",
+            var timingFunction = protected.transition + "TimingFunction",
             transitionArr = {},
             this_ = this,
             timer, eventEnd = function() {
@@ -420,20 +447,20 @@
                     try {
                         if (a.isMingGeAnimate) {
                             style = a.style;
-                            style[system.transition] = style[timingFunction] = null;
+                            style[protected.transition] = style[timingFunction] = null;
                             callback.call(a);
                         }
                     } catch(e) {}
                 }
             };
-            transitionArr[system.transition] = speed + "ms";
+            transitionArr[protected.transition] = speed + "ms";
             transitionArr[timingFunction] = model;
             this.css(transitionArr);
             setTimeout(function() {
                 this_.css(params);
             },
             5);
-            timer = setInterval(system.timeCompute(new Date().getTime(), speed - 1, eventEnd), 5);
+            timer = setInterval(protected.timeCompute(new Date().getTime(), speed - 1, eventEnd), 5);
             return this;
         },
         cmdFun: function(cmd) {
@@ -451,7 +478,7 @@
             }
         },
         insertHTML: function(str, cmd) {
-            cmd = system.cmdFun(cmd);
+            cmd = protected.cmdFun(cmd);
             str = trim(str);
             D.isTxt(str) && this.each(function() {
                 try {
@@ -476,14 +503,13 @@
                 attr = attribute;
                 attr.value && (attr.html = attr.value, delete attr.value);
             }
-            cmd = system.cmdFun(cmd);
+            cmd = protected.cmdFun(cmd);
             fun = function() {
                 try {
                     div = DOC.createElement("div"),
                     node = DOC.createElement(name),
-                    MingGeTemp = "MingGeTemp" + Math.random().toString().slice(2),
-                    i;
-                    seachIndex = seachIndex || system.seachIndex(["value", "innerHTML"], node);
+                    MingGeTemp = "MingGeTemp" + Math.random().toString().slice(2);
+                    seachIndex = seachIndex || protected.seachIndex(["value", "innerHTML"], node);
                     div.appendChild(node);
                     for (i in attr) {
                         if (i != "id" && D.isTxt(attr[i])) {
@@ -572,7 +598,7 @@
                         }
                         var responseText = this.serverdata = trim(xmlhttp.responseText);
                         if (D.isFunction(arg.success)) {
-                            if (arg.dataType == "JSON") responseText = system.JsonString.StringToJson(responseText) || responseText;
+                            if (arg.dataType == "JSON") responseText = protected.JsonString.StringToJson(responseText) || responseText;
                             arg.success(responseText, "success");
                         }
                     } else {
@@ -596,6 +622,7 @@
             },
             removeUploadEve: function() {},
             ajax: function(arg) {
+
                 if (!D.isString(arg.url)) {
                     return;
                 }
@@ -609,7 +636,7 @@
                 var floadTimeOut = parseFloat(trim(arg.timeout));
                 arg.timeout = floadTimeOut == NaN ? 2e4: floadTimeOut;
                 if (D.isString(arg.dataType) && (arg.dataType = trim(arg.dataType.toUpperCase())) == "JSONP") {
-                    system.jsonp(arg) || alert('Operation failed, please check "jsonpCallback" settings');
+                    protected.jsonp(arg) || alert('Operation failed, please check "jsonpCallback" settings');
                     return;
                 }
                 if (arg.lock && !this.transit) {
@@ -690,6 +717,7 @@
                     this._json_ = null;
                     return JsonJoin;
                 } catch(e) {
+
                     alert("Format does not match, conversion fails");
                     return;
                 }
@@ -768,14 +796,14 @@
             val = D.isTxt(val) ? trim(val) : "";
             if (transformReg.test(name)) {
                 regexps = new RegExp("" + name + "\\s?\\((.*)\\)", "i"),
-                transform = objstyle[system.transform];
+                transform = objstyle[protected.transform];
                 val ? name += "(" + val + ")": name = "";
-                arr = [system.transform, transform ? regexps.test(transform) ? transform.replace(regexps, name) : transform + " " + name: name];
+                arr = [protected.transform, transform ? regexps.test(transform) ? transform.replace(regexps, name) : transform + " " + name: name];
                 return arr;
             }
             if (name == "opacity") {
                 var filter, opacity, num;
-                if (system.opacity == "opacity") {
+                if (protected.opacity == "opacity") {
                     num = parseFloat(val, 10);
                     arr = ["opacity", isNaN(num) ? null: num];
                 } else {
@@ -979,9 +1007,9 @@
         var match = str.match(/[\.#]?([\w-]+)/g);
         if (match) for (var i = 0; i < match.length; i++) {
             if (num == 0) {
-                obj = i == 0 ? findTrue ? findTrue.find ? system.find.call(obj, match[0]) : system.filter.call(obj, match[0]) : new D().init(match[0], DOC) : system.filter.call(obj, match[i]);
+                obj = i == 0 ? findTrue ? findTrue.find ? protected.find.call(obj, match[0]) : protected.filter.call(obj, match[0]) : new D().init(match[0], DOC) : protected.filter.call(obj, match[i]);
             } else {
-                obj = i == 0 ? system.find.call(obj, match[0]) : system.filter.call(obj, match[i]);
+                obj = i == 0 ? protected.find.call(obj, match[0]) : protected.filter.call(obj, match[i]);
             }
         }
         return obj;
@@ -993,14 +1021,14 @@
         this.nodeList = [];
     };
     D.fn = D.prototype = {
-        version: "\u4f60\u4f7f\u7528\u7684\u7248\u672c\u662fMingGejs" + MingGEjs,
+        version: "\u4f60\u4f7f\u7528\u7684\u7248\u672c\u662fMingGejs" + MingGeJs,
         init: function(string, parent) {
             var R;
             if (D.isFunction(string)) {
-                system.ready(string);
+                protected.ready(string);
                 return this;
             }
-            if (string === window || string === DOC || string.ownerDocument) {
+            if (typeof string == "object") {
                 this.SelectorTxt = string;
                 this.nodeList = [string];
             } else if (R = optionColation(string)) {
@@ -1017,50 +1045,54 @@
             }
         },
         append: function(name) {
-            return system.createNode.call(this, name, {},
+            return protected.createNode.call(this, name, {},
             "beforeEnd");
         },
         createNode: function() {
-            return system.createNode.apply(this, arguments);
+            return protected.createNode.apply(this, arguments);
         },
         load: function(url, arg) {
             if (D.isFunction(url)) {
                 return this.bind("load", url);
             }
-            var this_ = this,
-            successFun = function(HTML) {
-                this_.each(function() {
-                    var seachIndex = system.seachIndex(["value", "innerHTML"], this);
-                    seachIndex && (this[seachIndex] = HTML);
-                });
-            };
-            if (arg == null) {
-                D.get(url, null, successFun);
-            } else {
-                D.post(url, arg, successFun);
+            if (D.isString(url)) {
+                var this_ = this,
+                successFun = function(HTML) {
+                    this_.each(function() {
+                        var seachIndex = protected.seachIndex(["value", "innerHTML"], this);
+                        seachIndex && (this[seachIndex] = HTML);
+                    });
+                };
+                if (arg == null) {
+                    D.get(url, null, successFun);
+                } else {
+                    D.post(url, arg, successFun);
+                }
+            } else if (arguments.length == 0) {
+                bubbling.call(this, "load");
             }
             return this;
         },
         insertHTML: function() {
-            return system.insertHTML.apply(this, arguments);
+            return protected.insertHTML.apply(this, arguments);
         },
         stop: function() {
-            system.transition || (system.transition = D.html5Attribute("transition"));
-            if (!system.transition) return this;
+            protected.transition || (protected.transition = D.html5Attribute("transition"));
+            if (!protected.transition) return this;
             return this.each(function() {
                 if (this.isMingGeAnimate) {
                     delete this.isMingGeAnimate;
                     this.mingGeAnimateList && delete this.mingGeAnimateList;
-                    var timingFunction = system.transition + "TimingFunction";
+                    var timingFunction = protected.transition + "TimingFunction";
                     var style = this.style;
-                    style[system.transition] = style[timingFunction] = null;
+                    style[protected.transition] = style[timingFunction] = null;
                 }
             });
         },
         fadeToggle: function(time, callback) {
             return this.each(function() {
-                var arr = system.oStyleValue(this);
-                if (system.original("display", arr) == "none") {
+                var arr = protected.oStyleValue(this);
+                if (protected.original("display", arr) == "none") {
                     D(this).fadeIn(time, callback);
                 } else {
                     D(this).fadeOut(time, callback);
@@ -1101,12 +1133,12 @@
         },
         fadeOut: function(time, callback) {
             var newD = new D();
-            system.transition || (system.transition = D.html5Attribute("transition"));
+            protected.transition || (protected.transition = D.html5Attribute("transition"));
             this.each(function() {
-                var arr = system.oStyleValue(this);
-                this.nodeType == 1 && (system.original("display", arr) == "none" || this.isMingGeAnimate || newD.nodeList.push(this));
+                var arr = protected.oStyleValue(this);
+                this.nodeType == 1 && (protected.original("display", arr) == "none" || this.isMingGeAnimate || newD.nodeList.push(this));
             });
-            if (system.transition) {
+            if (protected.transition) {
                 newD.animate({
                     opacity: 0
                 },
@@ -1127,7 +1159,7 @@
         hide: function() {
             D.each.call(this.nodeList,
             function() {
-                if (this.nodeType == 1 && system.original("display", system.oStyleValue(this)) != "none") {
+                if (this.nodeType == 1 && protected.original("display", protected.oStyleValue(this)) != "none") {
                     this.style.display = "none";
                 }
             });
@@ -1136,36 +1168,36 @@
         show: function() {
             D.each.call(this.nodeList,
             function() {
-                var arr = system.oStyleValue(this);
-                if (this.nodeType == 1 && system.original("display", arr) == "none") {
+                var arr = protected.oStyleValue(this);
+                if (this.nodeType == 1 && protected.original("display", arr) == "none") {
                     if (this.style.display == "none") {
                         this.style.display = "";
-                        system.original("display", arr) == "none" && (this.style.display = system.getDisplay(this.tagName));
+                        protected.original("display", arr) == "none" && (this.style.display = protected.getDisplay(this.tagName));
                     } else {
-                        this.style.display = system.getDisplay(this.tagName);
+                        this.style.display = protected.getDisplay(this.tagName);
                     }
                 }
             });
             return this;
         },
         fadeIn: function(time, callback) {
-            system.transition || (system.transition = D.html5Attribute("transition"));
+            protected.transition || (protected.transition = D.html5Attribute("transition"));
             var newD = new D();
             this.each(function() {
-                var arr = system.oStyleValue(this);
-                if (this.nodeType == 1 && system.original("display", arr) == "none") {
+                var arr = protected.oStyleValue(this);
+                if (this.nodeType == 1 && protected.original("display", arr) == "none") {
                     if (this.isMingGeAnimate) return;
-                    system.transition && D(this).css("opacity", 0);
+                    protected.transition && D(this).css("opacity", 0);
                     newD.nodeList.push(this);
                     if (this.style.display == "none") {
                         this.style.display = "";
-                        system.original("display", arr) == "none" && (this.style.display = system.getDisplay(this.tagName));
+                        protected.original("display", arr) == "none" && (this.style.display = protected.getDisplay(this.tagName));
                     } else {
-                        this.style.display = system.getDisplay(this.tagName);
+                        this.style.display = protected.getDisplay(this.tagName);
                     }
                 }
             });
-            if (system.transition) {
+            if (protected.transition) {
                 setTimeout(function() {
                     newD.animate({
                         opacity: 1
@@ -1182,8 +1214,8 @@
             return this;
         },
         animate: function(params, speed, callback, model) {
-            system.transition || (system.transition = D.html5Attribute("transition"));
-            if (!system.transition) {
+            protected.transition || (protected.transition = D.html5Attribute("transition"));
+            if (!protected.transition) {
                 this.css(params);
                 return this;
             }
@@ -1214,7 +1246,7 @@
                     newD.nodeList = [this];
                     arg = list[0];
                     list.splice(0, 1);
-                    system.animate.apply(newD, arg);
+                    protected.animate.apply(newD, arg);
                 } else {
                     delete this.mingGeAnimateList;
                     delete this.isMingGeAnimate;
@@ -1235,13 +1267,13 @@
                     lock || (lock = true);
                 }
             }
-            lock && system.animate.apply(newD, arg);
+            lock && protected.animate.apply(newD, arg);
             return this;
         },
         empty: function() {
             return this.each(function(i) {
                 if (this.nodeType == 1) {
-                    var seachIndex = system.seachIndex(["value", "innerHTML"], this);
+                    var seachIndex = protected.seachIndex(["value", "innerHTML"], this);
                     seachIndex && (this[seachIndex] = "");
                 }
             });
@@ -1265,9 +1297,9 @@
             args;
             if (D.isString(eveName) && D.isFunction(callback)) {
                 eveName = trim(eveName);
-                var isMouse = system.isMouse(eveName);
+                var isMouse = protected.isMouse(eveName);
                 while (elem = this.nodeList[i++]) {
-                    system.forEve(elem, eveName, callback, isOne, isMouse);
+                    protected.forEve(elem, eveName, callback, isOne, isMouse);
                 }
             } else if (D.isObject(eveName)) {
                 var trimKey;
@@ -1275,7 +1307,7 @@
                     for (var key in eveName) {
                         trimKey = trim(key);
                         if (D.isString(key) && D.isFunction(eveName[key])) {
-                            system.forEve(elem, trimKey, eveName[key], isOne, system.isMouse(trimKey));
+                            protected.forEve(elem, trimKey, eveName[key], isOne, protected.isMouse(trimKey));
                         }
                     }
                 }
@@ -1296,7 +1328,7 @@
             }
             eveName = trim(eveName);
             while (elem = this.nodeList[i++]) {
-                system.DelElemEve(elem, eveName, callback);
+                protected.DelElemEve(elem, eveName, callback);
             }
             return this;
         },
@@ -1307,7 +1339,7 @@
         SelectorTxt: false,
         nodeList: [],
         ready: function(callback) {
-            system.ready(callback);
+            protected.ready(callback);
             return this;
         },
         parent: function(re) {
@@ -1335,12 +1367,19 @@
             return this;
         },
         hasClass: function(str) {
-
             try {
-                return D.isString(str) && RegExp("(^|\\s)" + trim(str) + "($|\\s)").test(this.nodeList[0].className);
-            } catch(e) {
-                return false;
-            }
+                if (D.isString(str)) {
+                    var className, nodeList = this.nodeList;
+                    str = " " + trim(str) + " ";
+                    for (var i = 0; i < nodeList.length; i++) {
+                        className = nodeList[i].className;
+                        if (className && (" " + className + " ").indexOf(str) != -1) {
+                            return true;
+                        }
+                    }
+                }
+            } catch(e) {}
+            return false;
         },
         removeClass: function(str) {
             if (D.isString(str)) {
@@ -1412,38 +1451,38 @@
             return this;
         },
         clientWidth: function() {
-            return system.getCS.call(this, "clientWidth");
+            return protected.getCS.call(this, "clientWidth");
         },
         clientHeight: function() {
-            return system.getCS.call(this, "clientHeight");
+            return protected.getCS.call(this, "clientHeight");
         },
         scrollWidth: function() {
-            return system.getCS.call(this, "scrollWidth");
+            return protected.getCS.call(this, "scrollWidth");
         },
         scrollHeight: function() {
-            return system.getCS.call(this, "scrollHeight");
+            return protected.getCS.call(this, "scrollHeight");
         },
         scrollLeft: function(num) {
-            return system.setS.call(this, "scrollLeft", num);
+            return protected.setS.call(this, "scrollLeft", num);
         },
         scrollTop: function(num) {
-            return system.setS.call(this, "scrollTop", num);
+            return protected.setS.call(this, "scrollTop", num);
         },
         val: function(str) {
-            return system.htmlVal.call(this, "value", str);
+            return protected.htmlVal.call(this, "value", str);
         },
         html: function(str) {
-            return system.htmlVal.call(this, "innerHTML", str);
+            return protected.htmlVal.call(this, "innerHTML", str);
         },
         text: function(str) {
-            return system.htmlVal.call(this, system.isIndex("textContent", DOC.body) ? "textContent": "innerText", str);
+            return protected.htmlVal.call(this, protected.isIndex("textContent", DOC.body) ? "textContent": "innerText", str);
         },
         css: function(args, val) {
             var i = 0,
             elem, key, arrayKey = {},
             sty, type = typeof args;
-            system.opacity || (system.opacity = D.html5Attribute("opacity") || "filter");
-            system.transform || (system.transform = D.html5Attribute("transform"));
+            protected.opacity || (protected.opacity = D.html5Attribute("opacity") || "filter");
+            protected.transform || (protected.transform = D.html5Attribute("transform"));
             if (type === "string") {
                 args = D.styleName(trim(args));
                 if (D.isUndefined(val)) {
@@ -1451,22 +1490,22 @@
                         return null;
                     }
                     if (transformReg.test(args)) {
-                        var transform = elem.style[system.transform];
+                        var transform = elem.style[protected.transform];
                         if (transform) {
                             i = new RegExp("" + args + "\\s?\\((.*)\\)", "i").exec(transform);
                             return i && i[1];
                         }
                         return null;
                     }
-                    if (system.opacity == "filter") {
-                        return system.getFilter(elem);
+                    if (protected.opacity == "filter") {
+                        return protected.getFilter(elem);
                     }
-                    return system.original(args, system.oStyleValue(elem));
+                    return protected.original(args, protected.oStyleValue(elem));
                 }
                 while (elem = this.nodeList[i++]) {
                     try {
                         sty = elem.style;
-                        arrayKey = system.style(sty, args, val);
+                        arrayKey = protected.style(sty, args, val);
                         sty[arrayKey[0]] = arrayKey[1];
                     } catch(e) {}
                 }
@@ -1475,7 +1514,7 @@
                     sty = elem.style;
                     for (key in args) {
                         try {
-                            i == 1 && (arrayKey[key] = system.style(sty, D.styleName(key), args[key]));
+                            i == 1 && (arrayKey[key] = protected.style(sty, D.styleName(key), args[key]));
                             sty[arrayKey[key][0]] = arrayKey[key][1];
                         } catch(e) {}
                     }
@@ -1510,19 +1549,19 @@
         }
         return false;
     };
-    system.ajax.prototype = system.ajaxPrototype;
+    protected.ajax.prototype = protected.ajaxPrototype;
     D.extend({
         parseJSON: function(string, T) {
-            return system.JsonString.StringToJson(string, T);
+            return protected.JsonString.StringToJson(string, T);
         },
         toJSON: function(JSON) {
-            return system.JsonString.JsonToString(JSON);
+            return protected.JsonString.JsonToString(JSON);
         },
         setVar: function(name) {
             try {
                 delete window[varName];
             } catch(e) {
-                window[varName] = null;
+                window[varName] = undefined;
             }
             window[name] = D;
         },
@@ -1568,16 +1607,16 @@
             }
         },
         post: function(url, data, success) {
-            return new system.ajax().post(url, data, success);
+            return new protected.ajax().post(url, data, success);
         },
         get: function(url, data, success) {
-            return new system.ajax().get(url, data, success);
+            return new protected.ajax().get(url, data, success);
         },
         getJSON: function(url, data, success) {
-            return new system.ajax().getJSON(url, data, success);
+            return new protected.ajax().getJSON(url, data, success);
         },
         ajax: function(options) {
-            var returns = new system.ajax();
+            var returns = new protected.ajax();
             if (D.isObject(options)) {
                 returns.ajax(options);
             }
@@ -1678,9 +1717,10 @@
         isHtml5: function() {
             return !! DOC.createElement("canvas").getContext;
         },
+        _protected: protected,
         html5Attribute: function(attribute) {
             try {
-                var attributeLow = attribute ? attribute.toLowerCase() : "transform";
+                var attributeLow = D.isString(attribute) ? D.styleName(attribute) : "transform";
                 attribute = attributeLow.replace(/^\w/, attribute.charAt(0).toUpperCase());
                 var bodyStyle = DOC.body.style,
                 arr = [attributeLow, "Ms" + attribute, "Moz" + attribute, "Webkit" + attribute, "O" + attribute],
@@ -1705,10 +1745,10 @@
                     if (!node) return null;
                     if (node == window || node == DOC) {
                         if (newItem == "Width") {
-                            return system.winWH("Width");
+                            return protected.winWH("Width");
                         }
                         if (newItem == "Height") {
-                            return system.winWH("Height");
+                            return protected.winWH("Height");
                         }
                         node = DOC.body;
                     }
@@ -1774,23 +1814,7 @@
             D.fn[eveName] = function(eveName) {
                 return function(callback) {
                     if (D.isUndefined(callback)) {
-                        D.each.call(this.nodeList,
-                        function() {
-                            if (this[eveName]) {
-                                this[eveName]();
-                            } else {
-                                var MingGeBind = this.MingGeBind,
-                                this_ = this;
-                                MingGeBind && MingGeBind[eveName] && D.each(MingGeBind[eveName].concat(),
-                                function(key, val) {
-                                    var callback = val.callback;
-                                    try {
-                                        callback.isOne && system.DelElemEve(this_, eveName, callback);
-                                        callback.call(this_);
-                                    } catch(e) {}
-                                });
-                            }
-                        });
+                        bubbling.call(this, eveName);
                         return this;
                     }
                     return this.bind(eveName, callback);
